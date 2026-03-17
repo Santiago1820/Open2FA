@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Open2FA",
+  "version": "1.0.0",
+  "description": "Administra tus cuentas 2FA (TOTP) de forma segura.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background/service_worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["lib/i18n.js", "lib/totp.js", "content_scripts/autofill.js"],
+      "css": ["content_scripts/autofill.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_title": "Open2FA"
+  },
+  "options_page": "options/index.html",
+  "icons": {
+    "16": "assets/icon-16.png",
+    "32": "assets/icon-32.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  }
+}

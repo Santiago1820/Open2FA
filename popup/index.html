@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open2FA Popup</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="../assets/icon-16.png" alt="Logo" width="16" height="16">
+            <h2 data-i18n="app_name">Open2FA</h2>
+        </div>
+        <button id="settings-btn" title="Settings" class="icon-btn" data-i18n-title="settings">⚙️</button>
+    </header>
+
+    <main>
+        <div class="actions-row">
+            <button id="scan-qr-btn" class="action-btn" data-i18n-title="scan_qr">📷</button>
+            <button id="add-manual-btn" class="action-btn" data-i18n-title="add_account">➕</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="search" placeholder="Search accounts..." data-i18n="search_placeholder">
+        </div>
+        
+        <div id="accounts-list" class="list">
+            <!-- Items injected by JS -->
+        </div>
+
+        <div id="empty-state" class="empty-state hidden">
+            <p data-i18n="no_accounts">No accounts found.</p>
+        </div>
+    </main>
+
+    <!-- Tiny Add Modal in Popup -->
+    <div id="add-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 data-i18n="modal_title">Add Account</h2>
+                <button id="close-add-modal" class="icon-btn">&times;</button>
+            </div>
+            
+            <div class="mode-switcher">
+                <button id="mode-manual" class="mode-btn active" data-i18n="manual_mode">Manual</button>
+                <button id="mode-link" class="mode-btn" data-i18n="link_mode">Link</button>
+            </div>
+
+            <form id="popup-add-form">
+                <div id="manual-fields">
+                    <div class="form-group">
+                        <input type="text" id="p-domain" placeholder="Domains (comma separated)" data-i18n="add_domains">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="p-username" placeholder="Username/Email" data-i18n="username_label">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="p-secret" placeholder="Secret (Base32)" autocomplete="off" data-i18n="secret_label">
+                    </div>
+                </div>
+                <div id="link-fields" class="hidden">
+                    <div class="form-group">
+                        <input type="text" id="p-link" placeholder="otpauth://totp/..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="primary-btn" data-i18n="save">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tiny Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal confirm-modal">
+            <h2 data-i18n="delete_confirm" style="font-size: 13px; margin-bottom: 16px;">Are you sure?</h2>
+            <div class="modal-footer">
+                <button id="cancel-delete" class="secondary-btn" style="padding: 6px 12px; font-size: 12px;" data-i18n="cancel">Cancel</button>
+                <button id="confirm-delete" class="primary-btn" style="padding: 6px 12px; font-size: 12px; background-color: var(--danger-color);" data-i18n="delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+    
+    <script src="../lib/i18n.js"></script>
+    <script src="../lib/totp.js"></script>
+    <script src="../lib/jsQR.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

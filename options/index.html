@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="dashboard_title">Open2FA Dashboard</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="../assets/icon-32.png" alt="Open2FA Logo" />
+                <h1 data-i18n="app_name">Open2FA</h1>
+            </div>
+            <div class="header-actions">
+                <div class="lang-switch">
+                    <label for="lang-select" data-i18n="language_label">Language</label>
+                    <select id="lang-select">
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <button id="upload-qr-btn" class="secondary-btn" data-i18n="upload_qr">Upload QR</button>
+                <input type="file" id="qr-input" accept="image/*" class="hidden">
+                <button id="bulk-add-btn" class="secondary-btn" data-i18n="bulk_add">Bulk Add</button>
+                <button id="add-btn" class="primary-btn" data-i18n="add_account_btn">+ Add Account</button>
+            </div>
+        </header>
+
+        <main>
+            <div id="accounts-list" class="grid hidden">
+                <!-- Account cards will be injected here by JS -->
+            </div>
+            <div id="empty-state" class="empty-state">
+                <div class="empty-icon">🛡️</div>
+                <h2 data-i18n="no_accounts">No accounts yet</h2>
+                <p data-i18n="no_accounts_msg">Add a 2FA account to start securely autofilling your codes.</p>
+                <button id="add-btn-empty" class="primary-btn mt-4" data-i18n="first_account_btn">Add your first account</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 data-i18n="modal_title">Add 2FA Account</h2>
+                <button id="close-modal" class="icon-btn">&times;</button>
+            </div>
+            <form id="add-form">
+                <div class="form-group">
+                    <label for="domain" data-i18n="domain_label">Domain associated</label>
+                    <input type="text" id="domain" placeholder="e.g. csnegrete.com" required data-i18n="domain_placeholder">
+                    <small data-i18n="domain_hint">The extension will show codes for this domain.</small>
+                </div>
+                <div class="form-group">
+                    <label for="username" data-i18n="username_label">Username / Email</label>
+                    <input type="text" id="username" placeholder="e.g. hi@csnegrete.com" required data-i18n="username_placeholder">
+                </div>
+                <div class="form-group">
+                    <label for="secret" data-i18n="secret_label">2FA Secret (Base32)</label>
+                    <input type="text" id="secret" placeholder="e.g. JBSWY3DPEHPK3PXP" required autocomplete="off" spellcheck="false" data-i18n="secret_placeholder">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancel-btn" class="secondary-btn" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="primary-btn" data-i18n="save">Save Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Bulk Modal -->
+    <div id="bulk-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 data-i18n="bulk_add">Bulk Add</h2>
+                <button id="close-bulk-modal" class="icon-btn">&times;</button>
+            </div>
+            <div class="modal-body p-4">
+                <textarea id="bulk-urls" class="bulk-textarea" placeholder="otpauth://..." data-i18n="bulk_placeholder"></textarea>
+            </div>
+            <div class="modal-footer p-4">
+                <button id="cancel-bulk" class="secondary-btn" data-i18n="cancel">Cancel</button>
+                <button id="save-bulk" class="primary-btn" data-i18n="save">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal card" style="width: 320px; padding: 24px;">
+            <h2 data-i18n="delete_confirm" style="font-size: 16px; margin-bottom: 24px;">Are you sure?</h2>
+            <div class="modal-footer" style="padding: 0; border: none; gap: 12px;">
+                <button id="cancel-delete" class="secondary-btn" data-i18n="cancel">Cancel</button>
+                <button id="confirm-delete" class="primary-btn" style="background-color: var(--danger-color);" data-i18n="delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+    
+    <script src="../lib/i18n.js"></script>
+    <script src="../lib/totp.js"></script>
+    <script src="../lib/jsQR.js"></script>
+    <script src="options.js"></script>
+</body>
+</html>
