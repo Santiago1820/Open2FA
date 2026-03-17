@@ -32,6 +32,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let intervalId = null;
     let editingId = null;
 
+    let allFilteredAccounts = [];
+    let renderedCount = 0;
+    const PAGE_SIZE = 3;
+
     chrome.storage.local.get(['accounts'], (result) => {
         accounts = result.accounts || [];
         renderList(accounts);
@@ -72,9 +76,75 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderList(filtered);
     });
 
-    function renderList(items) {
-        listEl.innerHTML = '';
-        if (items.length === 0) {
+    // Create observer for Infinite Scroll using a sentinel
+    let observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && renderedCount < allFilteredAccounts.length) {
+            renderList(allFilteredAccounts, true);
+        }
+    }, { 
+        root: listEl,
+        threshold: 0.1,
+        rootMargin: '10px' // Trigger slightly before reaching the absolute bottom
+    });
+
+    // Sentinel element to trigger lazy loading
+    const sentinel = document.createElement('div');
+    sentinel.id = 'sentinel';
+    sentinel.style.height = '1px';
+    sentinel.style.width = '100%';
+
+    function createAccountItem(acc) {
+        const item = document.createElement('div');
+        item.className = 'account-item';
+        
+        item.innerHTML = `
+            <div class="acc-actions">
+                <div class="acc-edit-btn" data-id="${acc.id}" title="${t('edit')}">✎</div>
+                <div class="acc-delete-btn" data-id="${acc.id}" title="${t('remove')}">&times;</div>
+            </div>
+            <div class="account-info">
+                <div class="account-domain">${escapeHTML(acc.domain)}</div>
+                <div class="account-user">${escapeHTML(acc.username)}</div>
+            </div>
+            <div class="account-code" id="pcode-${acc.id}">--- ---</div>
+        `;
+        
+        item.querySelector('.acc-delete-btn').onclick = (e) => {
+            e.stopPropagation();
+            idToDelete = acc.id;
+            confirmModal.classList.remove('hidden');
+        };
+
+        item.querySelector('.acc-edit-btn').onclick = (e) => {
+            e.stopPropagation();
+            openEditModal(acc.id);
+        };
+
+        item.addEventListener('click', () => {
+            const codeSpan = document.getElementById(`pcode-${acc.id}`);
+            const codeRaw = codeSpan.dataset.raw;
+            if (codeRaw) {
+                navigator.clipboard.writeText(codeRaw).then(() => {
+                    const original = codeSpan.innerText;
+                    codeSpan.innerText = t('copied');
+                    setTimeout(() => codeSpan.innerText = original, 1000);
+                });
+            }
+        });
+
+        return item;
+    }
+
+    function renderList(items, append = false) {
+        observer.disconnect();
+        if (!append) {
+            listEl.innerHTML = '';
+            renderedCount = 0;
+            allFilteredAccounts = items;
+            listEl.scrollTop = 0;
+        }
+
+        if (allFilteredAccounts.length === 0) {
             listEl.classList.add('hidden');
             emptyState.classList.remove('hidden');
             return;
@@ -83,50 +153,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         listEl.classList.remove('hidden');
         emptyState.classList.add('hidden');
 
-        items.forEach(acc => {
-            const item = document.createElement('div');
-            item.className = 'account-item';
-            
-            item.innerHTML = `
-                <div class="acc-actions">
-                    <div class="acc-edit-btn" data-id="${acc.id}" title="${t('edit')}">✎</div>
-                    <div class="acc-delete-btn" data-id="${acc.id}" title="${t('remove')}">&times;</div>
-                </div>
-                <div class="account-info">
-                    <div class="account-domain">${escapeHTML(acc.domain)}</div>
-                    <div class="account-user">${escapeHTML(acc.username)}</div>
-                </div>
-                <div class="account-code" id="pcode-${acc.id}">--- ---</div>
-            `;
-            
-            // Delete logic
-            item.querySelector('.acc-delete-btn').onclick = (e) => {
-                e.stopPropagation();
-                idToDelete = acc.id;
-                confirmModal.classList.remove('hidden');
-            };
+        // Remove sentinel if it exists to append it at the end later
+        if (listEl.contains(sentinel)) {
+            listEl.removeChild(sentinel);
+        }
 
-            // Edit logic
-            item.querySelector('.acc-edit-btn').onclick = (e) => {
-                e.stopPropagation();
-                openEditModal(acc.id);
-            };
-
-            item.addEventListener('click', () => {
-                const codeSpan = document.getElementById(`pcode-${acc.id}`);
-                const codeRaw = codeSpan.dataset.raw;
-                if (codeRaw) {
-                    navigator.clipboard.writeText(codeRaw).then(() => {
-                        const original = codeSpan.innerText;
-                        codeSpan.innerText = t('copied');
-                        setTimeout(() => codeSpan.innerText = original, 1000);
-                    });
-                }
-            });
-
+        const nextBatch = allFilteredAccounts.slice(renderedCount, renderedCount + PAGE_SIZE);
+        
+        nextBatch.forEach(acc => {
+            const item = createAccountItem(acc);
             listEl.appendChild(item);
         });
+
+        renderedCount += nextBatch.length;
         updateCodes();
+
+        // Append sentinel and observe it if there are more items to load
+        if (renderedCount < allFilteredAccounts.length) {
+            listEl.appendChild(sentinel);
+            observer.observe(sentinel);
+        }
     }
 
     // --- Confirm Logic ---
@@ -300,22 +346,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    function isVisible(el) {
+        const rect = el.getBoundingClientRect();
+        const containerRect = listEl.getBoundingClientRect();
+        // Check if element overlaps with container's vertical bounds
+        return (rect.top < containerRect.bottom && rect.bottom > containerRect.top);
+    }
+
     async function updateCodes() {
         const elements = document.querySelectorAll('[id^=pcode-]');
         for (const el of elements) {
+            // Only calculate if visible to save CPU/Battery
+            if (!isVisible(el)) continue;
+
             const id = el.id.replace('pcode-', '');
             const acc = accounts.find(a => a.id === id);
             if (acc && el.innerText !== t('copied')) {
                 try {
                     const code = await generateTOTP(acc.secret);
-                    el.innerText = code.slice(0,3) + ' ' + code.slice(3);
-                    el.dataset.raw = code;
+                    const formatted = code.slice(0,3) + ' ' + code.slice(3);
+                    if (el.innerText !== formatted) {
+                        el.innerText = formatted;
+                        el.dataset.raw = code;
+                    }
                 } catch(e) {
                     el.innerText = t('error');
                 }
             }
         }
     }
+
+    // Trigger update on scroll to show codes immediately as they appear
+    listEl.addEventListener('scroll', updateCodes);
 
     function startUpdateLoop() {
         if (intervalId) clearInterval(intervalId);

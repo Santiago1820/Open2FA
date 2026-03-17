@@ -92,23 +92,39 @@ main { padding: 12px 16px; min-height: 200px; }
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 350px;
+    max-height: 208px; /* Fits exactly 3 items (208 = 64*3 + 8*2) */
     overflow-y: auto;
+    padding-right: 4px; /* Space for scrollbar */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .account-item {
+    height: 64px; /* Fixed height for consistent calculation */
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 10px;
+    border-radius: 8px;
+    padding: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    animation: fadeIn 0.3s ease-out forwards;
+    flex-shrink: 0; /* Prevent shrinking */
 }
-.account-item:hover { background-color: var(--card-hover); }
+.account-item:hover { 
+    background-color: var(--card-hover);
+    border-color: var(--accent-color);
+    transform: scale(1.01);
+}
+.account-item:active {
+    transform: scale(0.99);
+}
 
 /* Hover Action Buttons */
 .acc-actions {

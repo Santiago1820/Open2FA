@@ -151,10 +151,12 @@ function showDropdown(inputEl) {
     dropdownEl.style.display = 'flex';
     
     // Check overflow bottom
-    const dropdownHeight = accountsForDomain.length * 50; 
+    const ITEM_HEIGHT = 54;
+    const MAX_VISIBLE_ITEMS = 3;
+    const dropdownHeight = Math.min(accountsForDomain.length, MAX_VISIBLE_ITEMS) * ITEM_HEIGHT; 
     let top = rect.bottom + window.scrollY + 5;
     if (rect.bottom + dropdownHeight > window.innerHeight) {
-        top = rect.top + window.scrollY - 5 - Math.min(dropdownHeight, 250);
+        top = rect.top + window.scrollY - 5 - dropdownHeight;
     }
     
     dropdownEl.style.top = `${top}px`;

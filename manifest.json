@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Open2FA",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Administra tus cuentas 2FA (TOTP) de forma segura.",
   "permissions": [
     "storage",
